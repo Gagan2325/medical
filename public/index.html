@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Research Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .input-section {
+            padding: 40px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 18px 25px;
+            font-size: 1.1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 18px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .result-section {
+            padding: 40px;
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .article-content {
+            line-height: 1.8;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .article-content h2 {
+            color: #667eea;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .article-content h3 {
+            color: #764ba2;
+            margin: 25px 0 12px;
+        }
+
+        .article-content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .article-content ul, .article-content ol {
+            margin: 15px 0;
+            padding-left: 30px;
+            line-height: 1.8;
+        }
+
+        .article-content li {
+            margin-bottom: 12px;
+        }
+
+        .article-content ol li {
+            padding-left: 10px;
+        }
+
+        .article-content a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px dotted #667eea;
+            transition: all 0.2s ease;
+            word-break: break-word;
+        }
+
+        .article-content a:hover {
+            border-bottom-style: solid;
+            color: #764ba2;
+        }
+
+        .article-content a::after {
+            content: " ↗";
+            font-size: 0.8em;
+            opacity: 0.6;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .sources-badge {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            font-size: 0.95em;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .action-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .copy-success {
+            color: #28a745;
+            font-size: 0.9em;
+            margin-top: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-success.show {
+            opacity: 1;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .input-section {
+                padding: 20px;
+            }
+
+            .result-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🩺 Medical Research Assistant</h1>
+            <p>AI-powered medical article generation from trusted sources</p>
+            <div style="margin-top: 15px;">
+                <span class="badge">WHO</span>
+                <span class="badge">CDC</span>
+                <span class="badge">NIH</span>
+                <span class="badge">NEJM</span>
+                <span class="badge">The Lancet</span>
+                <span class="badge">PubMed</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="topicInput" 
+                        placeholder="Enter a medical topic (e.g., Dry Eye, Migraine, Diabetes...)"
+                        onkeypress="if(event.key === 'Enter') generateArticle()"
+                    >
+                    <button onclick="generateArticle()" id="generateBtn">
+                        Generate Article
+                    </button>
+                </div>
+            </div>
+
+            <div class="error" id="errorDiv"></div>
+
+            <div class="loading" id="loadingDiv">
+                <div class="spinner"></div>
+                <p style="color: #666; font-size: 1.1em;">Searching medical sources and generating article...</p>
+                <p style="color: #999; margin-top: 10px;">This may take 10-30 seconds</p>
+            </div>
+
+            <div class="result-section" id="resultSection">
+                <div class="sources-badge" id="sourcesBadge"></div>
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="newSearch()">🔍 New Search</button>
+                    <button class="action-btn" onclick="copyArticle()">📋 Copy Article</button>
+                </div>
+                <div class="copy-success" id="copySuccess">✓ Article copied to clipboard!</div>
+                <div class="article-content" id="articleContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateArticle() {
+            const topicInput = document.getElementById('topicInput');
+            const topic = topicInput.value.trim();
+            
+            if (!topic) {
+                showError('Please enter a medical topic');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const loadingDiv = document.getElementById('loadingDiv');
+            const resultSection = document.getElementById('resultSection');
+            const errorDiv = document.getElementById('errorDiv');
+
+            // Reset UI
+            errorDiv.classList.remove('active');
+            resultSection.classList.remove('active');
+            loadingDiv.classList.add('active');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ topic })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate article');
+                }
+
+                displayArticle(data.article);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loadingDiv.classList.remove('active');
+                generateBtn.disabled = false;
+            }
+        }
+
+        function displayArticle(article) {
+            const articleContent = document.getElementById('articleContent');
+            const resultSection = document.getElementById('resultSection');
+            const sourcesBadge = document.getElementById('sourcesBadge');
+
+            // Convert markdown-style formatting to HTML
+            let html = article;
+            
+            // Convert headers
+            html = html.replace(/### (.*)/g, '<h3>$1</h3>');
+            html = html.replace(/## (.*)/g, '<h2>$1</h2>');
+            html = html.replace(/# (.*)/g, '<h2>$1</h2>');
+            
+            // Convert bold and italic
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Convert numbered lists (e.g., "1. Item")
+            html = html.replace(/(\n\d+\.\s.*)+/g, function(match) {
+                const items = match.trim().split('\n').map(line => {
+                    return line.replace(/^\d+\.\s/, '<li>') + '</li>';
+                }).join('');
+                return '<ol>' + items + '</ol>';
+            });
+            
+            // Convert bullet lists (e.g., "- Item")
+            html = html.replace(/(\n-\s.*)+/g, function(match) {
+                const items = match.trim().split('\n').map(line => {
+                    return line.replace(/^-\s/, '<li>') + '</li>';
+                }).join('');
+                return '<ul>' + items + '</ul>';
+            });
+            
+            // Better URL handling with cleaner link text
+            html = html.replace(/\[(.*?)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank">$2</a>');
+            html = html.replace(/\((https?:\/\/[^\)]+)\)/g, ' - <a href="$1" target="_blank">View Source</a>');
+            
+            // Split into paragraphs
+            html = html.replace(/\n\n/g, '</p><p>');
+            
+            // Wrap in paragraphs if not starting with header
+            if (!html.startsWith('<h') && !html.startsWith('<ol') && !html.startsWith('<ul')) {
+                html = '<p>' + html + '</p>';
+            }
+            
+            // Clean up any remaining line breaks
+            html = html.replace(/\n/g, '<br>');
+
+            articleContent.innerHTML = html;
+            sourcesBadge.textContent = '✓ Generated from verified medical sources';
+            resultSection.classList.add('active');
+
+            // Scroll to results
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.textContent = '⚠️ Error: ' + message;
+            errorDiv.classList.add('active');
+        }
+
+        function newSearch() {
+            const topicInput = document.getElementById('topicInput');
+            const resultSection = document.getElementById('resultSection');
+            
+            resultSection.classList.remove('active');
+            topicInput.value = '';
+            topicInput.focus();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function copyArticle() {
+            const articleContent = document.getElementById('articleContent');
+            const copySuccess = document.getElementById('copySuccess');
+            
+            // Get text content without HTML tags
+            const textContent = articleContent.innerText || articleContent.textContent;
+            
+            try {
+                await navigator.clipboard.writeText(textContent);
+                copySuccess.classList.add('show');
+                
+                setTimeout(() => {
+                    copySuccess.classList.remove('show');
+                }, 3000);
+            } catch (err) {
+                showError('Failed to copy article to clipboard');
+            }
+        }
+
+        // Auto-focus on input
+        document.getElementById('topicInput').focus();
+    </script>
+</body>
+</html>

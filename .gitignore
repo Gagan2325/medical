@@ -1,0 +1,46 @@
+# ========================
+# Node.js
+# ========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# ========================
+# PHP
+# ========================
+vendor/
+composer.lock
+
+# ========================
+# CodeIgniter
+# ========================
+application/logs/*
+application/cache/*
+writable/
+
+# ========================
+# Environment Files
+# ========================
+.env
+.env.local
+.env.production
+
+# ========================
+# OS Files
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Editor Files
+# ========================
+.vscode/
+.idea/
+
+# ========================
+# Uploads (if needed)
+# ========================
+uploads/
+drvideo/
