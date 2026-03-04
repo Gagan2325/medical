@@ -28,33 +28,59 @@ async function searchMedicalSources(query) {
 async function generateMedicalArticle(topic) {
   const searchResults = await searchMedicalSources(topic);
 
-  const context = searchResults.map((r, i) => 
-    `[${i+1}] ${r.content}\nSource: ${r.url}`
+  const sources = searchResults.map((r, i) => ({
+    number: i + 1,
+    title: r.title || 'Medical Source',
+    url: r.url,
+    content: r.content
+  }));
+
+  const context = sources.map(s => 
+    `[${s.number}] ${s.content}\nTitle: ${s.title}\nURL: ${s.url}`
   ).join("\n\n");
 
-  const prompt = `
-  You are a medical research assistant.
-  Using ONLY the provided sources below, write a structured medical article.
+  const prompt = `You are a medical research assistant writing evidence-based content.
 
-  - Use inline citations like [1], [2].
-  - Do NOT invent sources.
-  - Cite statements precisely.
-  - Professional but accessible tone.
+CRITICAL RULES:
+1. Use ONLY information from the provided sources below
+2. Every factual statement MUST have an inline citation [1], [2], etc.
+3. Use multiple citations [1][2] when multiple sources support the same point
+4. Be precise - cite the specific source for each claim
+5. DO NOT make up information or sources
 
-  Sources:
-  ${context}
+When writing:
+- Start each major section with ## heading
+- Use ### for subsections if needed
+- Professional medical writing style
+- Accessible to educated non-specialists
+- Include specific details (symptoms, treatments, statistics) from sources with citations
 
-  Topic: ${topic}
+Sources:
+${context}
 
-  Structure:
-  - Overview
-  - Causes / Mechanism
-  - Symptoms
-  - Diagnosis
-  - Treatment
-  - Prevention
-  - References (numbered with links)
-  `;
+Topic: ${topic}
+
+Required Structure:
+## Overview
+[Introduction to the condition with citations]
+
+## Causes and Risk Factors
+[What causes it, risk factors - all cited]
+
+## Symptoms and Signs
+[Clinical presentation - all cited]
+
+## Diagnosis
+[How it's diagnosed - cited]
+
+## Treatment Options
+[Current treatments - cited]
+
+## Prevention and Management
+[Preventive measures - cited]
+
+## References
+[List all sources in numbered format with full titles and URLs]`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4.1",
@@ -62,7 +88,10 @@ async function generateMedicalArticle(topic) {
     temperature: 0.3
   });
 
-  return response.choices[0].message.content;
+  return {
+    article: response.choices[0].message.content,
+    sources: sources
+  };
 }
 
 // Default GET route
@@ -93,8 +122,8 @@ app.post('/api/generate', async (req, res) => {
       return res.status(400).json({ error: 'Topic is required' });
     }
 
-    const article = await generateMedicalArticle(topic);
-    res.json({ article });
+    const result = await generateMedicalArticle(topic);
+    res.json(result);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });

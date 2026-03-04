@@ -186,6 +186,78 @@
             opacity: 0.6;
         }
 
+        .citation {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 0 2px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            vertical-align: super;
+            line-height: 1;
+        }
+
+        .citation:hover {
+            background: #764ba2;
+            transform: scale(1.1);
+        }
+
+        .reference-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .reference-item:hover {
+            background: #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .reference-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: 600;
+            margin-right: 12px;
+            font-size: 0.9em;
+        }
+
+        .reference-title {
+            font-weight: 600;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .reference-url {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+
+        .reference-url:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        #references-section {
+            margin-top: 40px;
+        }
+
         .error {
             background: #fee;
             color: #c33;
@@ -403,7 +475,7 @@
                     throw new Error(data.error || 'Failed to generate article');
                 }
 
-                displayArticle(data.article);
+                displayArticle(data.article, data.sources);
             } catch (error) {
                 showError(error.message);
             } finally {
@@ -412,7 +484,7 @@
             }
         }
 
-        function displayArticle(article) {
+        function displayArticle(article, sources) {
             const articleContent = document.getElementById('articleContent');
             const resultSection = document.getElementById('resultSection');
             const sourcesBadge = document.getElementById('sourcesBadge');
@@ -428,6 +500,9 @@
             // Convert bold and italic
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Convert citations [1], [2], [1][2] to clickable superscript buttons
+            html = html.replace(/\[(\d+)\]/g, '<a href="#ref-$1" class="citation" title="Click to view reference">$1</a>');
             
             // Convert numbered lists (e.g., "1. Item")
             html = html.replace(/(\n\d+\.\s.*)+/g, function(match) {
@@ -445,10 +520,6 @@
                 return '<ul>' + items + '</ul>';
             });
             
-            // Better URL handling with cleaner link text
-            html = html.replace(/\[(.*?)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank">$2</a>');
-            html = html.replace(/\((https?:\/\/[^\)]+)\)/g, ' - <a href="$1" target="_blank">View Source</a>');
-            
             // Split into paragraphs
             html = html.replace(/\n\n/g, '</p><p>');
             
@@ -460,8 +531,25 @@
             // Clean up any remaining line breaks
             html = html.replace(/\n/g, '<br>');
 
+            // Add formatted references section if sources are provided
+            if (sources && sources.length > 0) {
+                html += '<div id="references-section"><h2>References</h2>';
+                sources.forEach(source => {
+                    html += `
+                        <div class="reference-item" id="ref-${source.number}">
+                            <span class="reference-number">${source.number}</span>
+                            <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                <span class="reference-title">${source.title}</span>
+                                <a href="${source.url}" target="_blank" class="reference-url">${source.url}</a>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
             articleContent.innerHTML = html;
-            sourcesBadge.textContent = '✓ Generated from verified medical sources';
+            sourcesBadge.textContent = `✓ Generated from ${sources ? sources.length : 5} verified medical sources`;
             resultSection.classList.add('active');
 
             // Scroll to results
