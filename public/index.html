@@ -189,22 +189,66 @@
         .citation {
             display: inline-block;
             background: #667eea;
-            color: white;
-            padding: 2px 6px;
+            color: white !important;
+            padding: 2px 7px;
             border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: 600;
+            font-size: 0.75em;
+            font-weight: 700;
             margin: 0 2px;
             cursor: pointer;
-            text-decoration: none;
+            text-decoration: none !important;
             transition: all 0.2s ease;
             vertical-align: super;
-            line-height: 1;
+            line-height: 1.2;
+            min-width: 18px;
+            text-align: center;
+            position: relative;
         }
 
         .citation:hover {
-            background: #764ba2;
-            transform: scale(1.1);
+            background: #764ba2 !important;
+            transform: scale(1.15);
+            color: white !important;
+            text-decoration: none !important;
+        }
+
+        .citation::after {
+            content: none !important;
+        }
+
+        .citation-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            font-weight: normal;
+        }
+
+        .citation:hover .citation-tooltip {
+            opacity: 1;
+        }
+
+        .citation-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #333;
         }
 
         .reference-item {
@@ -214,11 +258,43 @@
             border-left: 4px solid #667eea;
             border-radius: 5px;
             transition: all 0.3s ease;
+            scroll-margin-top: 20px;
+            position: relative;
         }
 
         .reference-item:hover {
             background: #e9ecef;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+        }
+
+        .reference-item::after {
+            content: '🔗 Click to open source';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 0.85em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .reference-item:hover::after {
+            opacity: 1;
+        }
+
+        .reference-item.highlighted {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
 
         .reference-number {
@@ -233,6 +309,12 @@
             font-weight: 600;
             margin-right: 12px;
             font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .reference-item.highlighted .reference-number {
+            background: #ffc107;
+            color: #000;
         }
 
         .reference-title {
@@ -551,6 +633,71 @@
             articleContent.innerHTML = html;
             sourcesBadge.textContent = `✓ Generated from ${sources ? sources.length : 5} verified medical sources`;
             resultSection.classList.add('active');
+
+            // Add click handlers to citations for highlighting references
+            setTimeout(() => {
+                const citations = document.querySelectorAll('.citation');
+                citations.forEach(citation => {
+                    // Add tooltip with source info
+                    const refNum = citation.textContent;
+                    if (sources && sources[refNum - 1]) {
+                        const source = sources[refNum - 1];
+                        const tooltip = document.createElement('span');
+                        tooltip.className = 'citation-tooltip';
+                        tooltip.textContent = source.title + ' - Click to view, Ctrl+Click to open';
+                        citation.appendChild(tooltip);
+                    }
+
+                    citation.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const refId = this.getAttribute('href');
+                        const refNum = this.textContent.replace(/[^0-9]/g, '');
+                        
+                        // Ctrl+Click or Cmd+Click opens the source URL directly
+                        if (e.ctrlKey || e.metaKey) {
+                            if (sources && sources[refNum - 1]) {
+                                window.open(sources[refNum - 1].url, '_blank');
+                            }
+                            return;
+                        }
+                        
+                        const refElement = document.querySelector(refId);
+                        
+                        if (refElement) {
+                            // Remove previous highlights
+                            document.querySelectorAll('.reference-item.highlighted').forEach(item => {
+                                item.classList.remove('highlighted');
+                            });
+                            
+                            // Add highlight to clicked reference
+                            refElement.classList.add('highlighted');
+                            
+                            // Scroll to reference
+                            refElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            
+                            // Remove highlight after 3 seconds
+                            setTimeout(() => {
+                                refElement.classList.remove('highlighted');
+                            }, 3000);
+                        }
+                    });
+                });
+
+                // Make reference items clickable to open source
+                const refItems = document.querySelectorAll('.reference-item');
+                refItems.forEach(refItem => {
+                    const link = refItem.querySelector('.reference-url');
+                    if (link) {
+                        refItem.style.cursor = 'pointer';
+                        refItem.addEventListener('click', function(e) {
+                            // Don't trigger if clicking the link itself
+                            if (e.target.tagName !== 'A') {
+                                window.open(link.href, '_blank');
+                            }
+                        });
+                    }
+                });
+            }, 100);
 
             // Scroll to results
             resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
