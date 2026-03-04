@@ -1,11 +1,14 @@
 {
   "name": "perplexity",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI-powered medical article generator from trusted sources",
   "license": "ISC",
   "author": "",
   "type": "module",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.x"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
