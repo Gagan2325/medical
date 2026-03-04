@@ -65,6 +65,26 @@ async function generateMedicalArticle(topic) {
   return response.choices[0].message.content;
 }
 
+// Default GET route
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
+});
+
+// API info endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'Medical Research Assistant API',
+    version: '1.0.0',
+    description: 'AI-powered medical article generation from trusted sources',
+    endpoints: {
+      '/': 'Web interface',
+      '/api': 'API information',
+      '/api/generate': 'POST - Generate medical article (requires: { topic: string })'
+    },
+    sources: ['WHO', 'CDC', 'NIH', 'NEJM', 'The Lancet', 'PubMed']
+  });
+});
+
 app.post('/api/generate', async (req, res) => {
   try {
     const { topic } = req.body;
@@ -81,6 +101,12 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🩺 Medical Research Assistant running at http://localhost:${PORT}`);
-});
+// Only listen on port in local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🩺 Medical Research Assistant running at http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+export default app;
